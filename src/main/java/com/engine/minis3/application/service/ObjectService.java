@@ -30,25 +30,28 @@ public class ObjectService {
     private final BucketRepositoryPort bucketRepository;
     private final ObjectMetadataPort objectMetadata;
     private final ChunkStorePort chunkStore;
-    private final int chunkSize;
+    private final com.engine.minis3.domain.port.ChunkerPort chunker;
+    private final com.engine.minis3.application.event.S3EventPublisher eventPublisher;
     private final int zstdLevel;
 
     public ObjectService(BucketRepositoryPort bucketRepository,
                          ObjectMetadataPort objectMetadata,
                          ChunkStorePort chunkStore,
+                         com.engine.minis3.domain.port.ChunkerPort chunker,
+                         com.engine.minis3.application.event.S3EventPublisher eventPublisher,
                          MiniS3Properties properties) {
         this.bucketRepository = bucketRepository;
         this.objectMetadata = objectMetadata;
         this.chunkStore = chunkStore;
-        this.chunkSize = properties.getStorage().getChunkSize();
+        this.chunker = chunker;
+        this.eventPublisher = eventPublisher;
         this.zstdLevel = properties.getStorage().getZstdLevel();
     }
 
     public S3Object putObject(String bucketName, String key, String contentType,
                              InputStream inputStream, long contentLength, String expectedMd5) {
-        if (!bucketRepository.exists(bucketName)) {
-            throw new NoSuchBucketException(bucketName);
-        }
+        Bucket bucket = bucketRepository.findByName(bucketName)
+                .orElseThrow(() -> new NoSuchBucketException(bucketName));
 
         List<ObjectChunkRef> chunkRefs = new ArrayList<>();
         MessageDigest overallMd5 = DigestUtils.getMd5Digest();
@@ -56,33 +59,25 @@ public class ObjectService {
         int chunkOrder = 0;
 
         try {
-            byte[] buffer = new byte[chunkSize];
-            int readInCurrentChunk = 0;
+            ByteArrayOutputStream completePayload = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
             int n;
 
-            // Handle empty file upload
-            ByteArrayOutputStream currentChunkStream = new ByteArrayOutputStream();
-
             while ((n = inputStream.read(buffer)) != -1) {
-                currentChunkStream.write(buffer, 0, n);
+                completePayload.write(buffer, 0, n);
                 overallMd5.update(buffer, 0, n);
                 totalBytesRead += n;
-
-                if (currentChunkStream.size() >= chunkSize) {
-                    byte[] chunkData = currentChunkStream.toByteArray();
-                    ObjectChunkRef ref = processAndStoreChunk(chunkOrder++, totalBytesRead - chunkData.length, chunkData);
-                    chunkRefs.add(ref);
-                    currentChunkStream.reset();
-                }
             }
 
-            if (currentChunkStream.size() > 0 || chunkRefs.isEmpty()) {
-                byte[] chunkData = currentChunkStream.toByteArray();
-                long offset = totalBytesRead - chunkData.length;
-                ObjectChunkRef ref = processAndStoreChunk(chunkOrder++, offset, chunkData);
+            byte[] fullData = completePayload.toByteArray();
+            List<byte[]> partitionedChunks = chunker.chunk(fullData);
+
+            long currentOffset = 0;
+            for (byte[] chunkData : partitionedChunks) {
+                ObjectChunkRef ref = processAndStoreChunk(chunkOrder++, currentOffset, chunkData);
                 chunkRefs.add(ref);
+                currentOffset += chunkData.length;
             }
-
         } catch (IOException e) {
             throw new IllegalStateException("Failed to stream object payload for: " + key, e);
         }
@@ -93,9 +88,17 @@ public class ObjectService {
             validateContentMd5(expectedMd5, computedEtag);
         }
 
+        String versionId = "null";
+        if (bucket.getVersioningStatus() == VersioningStatus.ENABLED) {
+            versionId = UUID.randomUUID().toString();
+        }
+
         S3Object s3Object = new S3Object(
                 bucketName,
                 key,
+                versionId,
+                true,
+                false,
                 totalBytesRead,
                 computedEtag,
                 contentType,
@@ -104,7 +107,10 @@ public class ObjectService {
         );
 
         objectMetadata.save(s3Object);
-        log.debug("Stored object s3://{}/{} size={} chunks={}", bucketName, key, totalBytesRead, chunkRefs.size());
+        log.debug("Stored object s3://{}/{} versionId={} size={} chunks={}",
+                bucketName, key, versionId, totalBytesRead, chunkRefs.size());
+        eventPublisher.publish("OBJECT_CREATED", bucketName, key,
+                "Ingested " + totalBytesRead + " bytes (" + chunkRefs.size() + " chunks, ver: " + versionId + ")");
         return s3Object;
     }
 
@@ -126,7 +132,6 @@ public class ObjectService {
 
     private void validateContentMd5(String expectedMd5, String computedEtag) {
         String expectedHex = expectedMd5.trim();
-        // If provided as Base64, convert to hex
         if (expectedHex.length() == 24 && expectedHex.endsWith("=")) {
             try {
                 byte[] decoded = Base64.getDecoder().decode(expectedHex);
@@ -139,11 +144,31 @@ public class ObjectService {
     }
 
     public S3Object getObject(String bucketName, String key) {
+        return getObject(bucketName, key, null);
+    }
+
+    public S3Object getObject(String bucketName, String key, String versionId) {
         if (!bucketRepository.exists(bucketName)) {
             throw new NoSuchBucketException(bucketName);
         }
-        return objectMetadata.findByBucketAndKey(bucketName, key)
-                .orElseThrow(() -> new NoSuchKeyException(key));
+        Optional<S3Object> objOpt = (versionId != null && !versionId.isBlank() && !"null".equalsIgnoreCase(versionId))
+                ? objectMetadata.findByBucketAndKeyAndVersion(bucketName, key, versionId)
+                : objectMetadata.findByBucketAndKey(bucketName, key);
+
+        S3Object object = objOpt.orElseThrow(() -> new NoSuchKeyException(key));
+        if (object.isDeleteMarker()) {
+            throw new NoSuchKeyException(key);
+        }
+        return object;
+    }
+
+    public Optional<S3Object> headObject(String bucketName, String key, String versionId) {
+        if (!bucketRepository.exists(bucketName)) {
+            throw new NoSuchBucketException(bucketName);
+        }
+        return (versionId != null && !versionId.isBlank() && !"null".equalsIgnoreCase(versionId))
+                ? objectMetadata.findByBucketAndKeyAndVersion(bucketName, key, versionId)
+                : objectMetadata.findByBucketAndKey(bucketName, key);
     }
 
     public void streamObject(S3Object object, OutputStream outputStream) throws IOException {
@@ -194,10 +219,28 @@ public class ObjectService {
     }
 
     public void deleteObject(String bucketName, String key) {
+        deleteObject(bucketName, key, null);
+    }
+
+    public void deleteObject(String bucketName, String key, String versionId) {
         if (!bucketRepository.exists(bucketName)) {
             throw new NoSuchBucketException(bucketName);
         }
-        objectMetadata.delete(bucketName, key);
+        if (versionId != null && !versionId.isBlank() && !"null".equalsIgnoreCase(versionId)) {
+            objectMetadata.deleteVersion(bucketName, key, versionId);
+            eventPublisher.publish("OBJECT_DELETED", bucketName, key, "Permanently purged version " + versionId);
+        } else {
+            objectMetadata.delete(bucketName, key);
+            eventPublisher.publish("OBJECT_DELETED", bucketName, key, "Deleted object / created delete marker");
+        }
+    }
+
+    public void deleteBatch(String bucketName, List<ObjectKeyVersion> targets) {
+        if (!bucketRepository.exists(bucketName)) {
+            throw new NoSuchBucketException(bucketName);
+        }
+        objectMetadata.deleteBatch(bucketName, targets);
+        eventPublisher.publish("BATCH_DELETE", bucketName, null, "Batch deleted " + targets.size() + " objects/versions");
     }
 
     public List<S3Object> listObjects(String bucketName, String prefix, String continuationToken, int maxKeys) {
@@ -205,5 +248,12 @@ public class ObjectService {
             throw new NoSuchBucketException(bucketName);
         }
         return objectMetadata.listObjects(bucketName, prefix, continuationToken, maxKeys);
+    }
+
+    public List<S3Object> listObjectVersions(String bucketName, String prefix, String keyMarker, String versionIdMarker, int maxKeys) {
+        if (!bucketRepository.exists(bucketName)) {
+            throw new NoSuchBucketException(bucketName);
+        }
+        return objectMetadata.listObjectVersions(bucketName, prefix, keyMarker, versionIdMarker, maxKeys);
     }
 }

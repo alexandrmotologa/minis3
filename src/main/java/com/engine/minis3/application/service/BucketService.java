@@ -4,6 +4,7 @@ import com.engine.minis3.domain.exception.BucketAlreadyExistsException;
 import com.engine.minis3.domain.exception.BucketNotEmptyException;
 import com.engine.minis3.domain.exception.NoSuchBucketException;
 import com.engine.minis3.domain.model.Bucket;
+import com.engine.minis3.domain.model.VersioningStatus;
 import com.engine.minis3.domain.port.BucketRepositoryPort;
 import com.engine.minis3.domain.port.ObjectMetadataPort;
 import org.springframework.stereotype.Service;
@@ -50,5 +51,16 @@ public class BucketService {
             throw new BucketNotEmptyException(bucketName);
         }
         bucketRepository.delete(bucketName);
+    }
+
+    public void setVersioning(String bucketName, VersioningStatus status) {
+        if (!bucketRepository.exists(bucketName)) {
+            throw new NoSuchBucketException(bucketName);
+        }
+        bucketRepository.updateVersioningStatus(bucketName, status);
+    }
+
+    public VersioningStatus getVersioning(String bucketName) {
+        return getBucket(bucketName).getVersioningStatus();
     }
 }

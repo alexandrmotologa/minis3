@@ -25,10 +25,20 @@
       </div>
 
       <div class="nav-actions">
+        <div class="engine-badge" id="sse-status" title="Server-Sent Events Telemetry Stream">
+          <span class="status-dot green"></span>
+          <span id="sse-text">Live Telemetry</span>
+        </div>
         <div class="engine-badge">
           <span class="status-dot"></span>
           <span>Virtual Threads &bull; Port 9000</span>
         </div>
+        <button id="btn-scrub" class="btn btn-secondary" title="Audit SHA-256 chunk bitrot on disk">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Scrub Storage
+        </button>
         <button id="btn-gc" class="btn btn-secondary" title="Run Garbage Collection on unreferenced chunks">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -82,11 +92,21 @@
       <!-- Content Area: Objects -->
       <section class="content-panel">
         <div class="panel-header">
-          <div>
-            <h2 id="current-bucket-title">Select a bucket</h2>
+          <div class="header-left">
+            <div class="bucket-title-row">
+              <h2 id="current-bucket-title">Select a bucket</h2>
+              <span id="bucket-versioning-badge" class="versioning-badge badge-off" style="display: none;">OFF</span>
+            </div>
             <div id="breadcrumb" class="breadcrumb">/</div>
           </div>
           <div class="panel-actions" id="bucket-actions" style="display: none;">
+            <label class="toggle-container" title="Show delete markers and older versions">
+              <input type="checkbox" id="chk-show-versions">
+              <span>Show Versions</span>
+            </label>
+            <button id="btn-toggle-versioning" class="btn btn-sm btn-secondary" title="Enable or suspend object versioning">
+              Enable Versioning
+            </button>
             <button id="btn-delete-bucket" class="btn btn-danger btn-sm">Delete Bucket</button>
           </div>
         </div>
@@ -101,7 +121,7 @@
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             <p>Drag and drop files here to upload, or <a href="#" id="browse-link">browse your disk</a></p>
-            <span class="dropzone-sub">Files are chunked, SHA-256 hashed, and deduplicated automatically.</span>
+            <span class="dropzone-sub">FastCDC chunking, entropy-aware bypass, SHA-256 CAS deduplication.</span>
           </div>
           <div id="upload-progress" class="upload-progress" style="display: none;">
             <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -115,6 +135,7 @@
             <thead>
               <tr>
                 <th>Key</th>
+                <th>Version</th>
                 <th>Content Type</th>
                 <th>Size</th>
                 <th>ETag</th>
@@ -124,13 +145,100 @@
             </thead>
             <tbody id="objects-tbody">
               <tr>
-                <td colspan="6" class="empty-state">Select a bucket from the sidebar to browse objects.</td>
+                <td colspan="7" class="empty-state">Select a bucket from the sidebar to browse objects.</td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Real-Time Activity Stream Drawer -->
+        <div class="activity-drawer">
+          <div class="activity-header">
+            <div class="activity-title">
+              <span class="pulse-icon"></span>
+              <span>Real-Time Activity Stream (SSE)</span>
+              <span class="activity-count" id="activity-count">0 events</span>
+            </div>
+            <div class="activity-controls">
+              <button id="btn-clear-activity" class="btn-text">Clear</button>
+            </div>
+          </div>
+          <div class="activity-body" id="activity-stream">
+            <div class="activity-empty">Awaiting S3 events...</div>
+          </div>
+        </div>
       </section>
     </main>
+  </div>
+
+  <!-- Preview Modal -->
+  <div id="preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="preview-title" class="modal-title">Object Preview</h3>
+          <span id="preview-subtitle" class="modal-subtitle"></span>
+        </div>
+        <button id="btn-close-preview" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body" id="preview-content">
+        <div class="preview-loading">Loading content...</div>
+      </div>
+      <div class="modal-footer">
+        <a id="preview-download-link" href="#" target="_blank" class="btn btn-primary">Download File</a>
+        <button id="btn-dismiss-preview" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presigned URL Modal -->
+  <div id="presign-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Generate S3 Presigned URL</h3>
+          <span id="presign-subtitle" class="modal-subtitle">AWS SigV4 Signed Query Authorization</span>
+        </div>
+        <button id="btn-close-presign" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Target Object</label>
+          <input type="text" id="presign-key" class="form-control" readonly>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>HTTP Method</label>
+            <select id="presign-method" class="form-control">
+              <option value="GET">GET (Download / View)</option>
+              <option value="PUT">PUT (Upload)</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label>Expiration</label>
+            <select id="presign-expires" class="form-control">
+              <option value="60">1 Minute</option>
+              <option value="300" selected>5 Minutes</option>
+              <option value="3600">1 Hour</option>
+              <option value="86400">24 Hours</option>
+              <option value="604800">7 Days</option>
+            </select>
+          </div>
+        </div>
+        <button id="btn-generate-presign" class="btn btn-primary btn-block">Generate Presigned URL</button>
+
+        <div id="presign-result-container" class="presign-result" style="display: none;">
+          <label>Generated SigV4 URL</label>
+          <div class="copy-input-group">
+            <input type="text" id="presign-url-output" class="form-control" readonly>
+            <button id="btn-copy-presign" class="btn btn-secondary">Copy</button>
+          </div>
+          <div class="presign-links">
+            <a id="presign-open-link" href="#" target="_blank" class="action-link">Open in New Tab &nearr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Toast Notification -->

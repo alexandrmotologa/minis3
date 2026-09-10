@@ -17,19 +17,24 @@ MiniS3 addresses this with a content-addressable storage core:
 ## Key capabilities
 
 - AWS S3 compatibility: Implements core endpoints including bucket creation, single object PUT and GET, byte-range retrieval (`Range: bytes=start-end`), object deletion, and `ListObjectsV2` pagination.
-- AWS Signature Version 4 (SigV4): Authenticates requests signed with HMAC-SHA256 credentials, including canonical request verification and presigned URLs.
+- Object versioning and multi-object delete: Full S3 versioning lifecycle (`ENABLED`, `SUSPENDED`, `OFF`), non-current version tracking, delete markers, `GET ?versions` XML response, and batch `POST ?delete`.
+- FastCDC content-defined chunking: Gear-hash rolling window partitioning with two-phase normalization for resilient deduplication under byte insertions and shift shifts.
+- Entropy-aware compression bypass: Fast Shannon entropy estimation detects pre-compressed formats (gzip, mp4, zip) to bypass Zstandard compression and avoid CPU cycles.
+- Storage scrubber & bitrot detector: Audits physical chunk integrity against recorded SHA-256 digests and reports health statistics.
+- Multi-credential IAM: Dynamic API key management supporting scoped roles (`ADMIN`, `READ_WRITE`, `READ_ONLY`) and bucket restriction rules.
+- S3 Presigned URLs: Generates and validates standard AWS SigV4 signed query parameter URLs with expiration limits.
 - Content-addressable deduplication: Slices objects into deterministic SHA-256 chunks with cross-bucket deduplication.
-- Transparent Zstandard compression: Native compression and decompression using high performance Zstd.
+- Transparent Zstandard compression: Native compression and decompression using high performance Zstd (`zstd-jni`).
 - S3 multipart uploads: Supports initiating, uploading parts, completing, and aborting large chunked uploads.
-- Embedded web dashboard: Single-page administrative dashboard running on port 9000 showing bucket contents, live upload speeds, and real-time storage savings.
+- Real-time SSE telemetry and dashboard: Embedded single-page dashboard featuring a live activity feed, bucket versioning controls, media player & document preview modal, and presign UI.
 - Java 21 Virtual Threads: Handles concurrent streaming I/O with high throughput and low memory overhead.
 
 ## Architecture
 
 MiniS3 follows hexagonal architecture (ports and adapters) to isolate core business rules from storage drivers and HTTP layers:
 
-- `domain`: Pure Java 21 models (`Bucket`, `S3Object`, `ChunkHash`, `Chunk`) and business exceptions. It contains zero framework dependencies.
-- `application`: Use cases for bucket management, object streaming, multipart assembly, and administrative telemetry.
+- `domain`: Pure Java 21 models (`Bucket`, `S3Object`, `ChunkHash`, `Chunk`, `ApiCredential`, `ScrubReport`), chunking ports, and SigV4 authentication validators. It contains zero framework dependencies.
+- `application`: Use cases for bucket management, object streaming, FastCDC chunking, background scrubbing, and real-time SSE event publishing.
 - `infrastructure`: Inbound REST controllers, SigV4 authentication filters, SQLite metadata repository (WAL mode), Zstandard CAS chunk store, and embedded web console.
 
 For more details, see [docs/architecture.md](docs/architecture.md), [docs/cas-deduplication.md](docs/cas-deduplication.md), and [docs/s3-api-compatibility.md](docs/s3-api-compatibility.md).

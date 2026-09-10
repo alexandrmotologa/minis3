@@ -33,6 +33,15 @@ public class MiniS3Properties {
         private String rootDir = "./.minis3";
         private int chunkSize = 4 * 1024 * 1024; // 4 MB
         private int zstdLevel = 3;
+        private com.engine.minis3.domain.model.ChunkingStrategy chunkingStrategy = com.engine.minis3.domain.model.ChunkingStrategy.FAST_CDC;
+
+        public com.engine.minis3.domain.model.ChunkingStrategy getChunkingStrategy() {
+            return chunkingStrategy;
+        }
+
+        public void setChunkingStrategy(com.engine.minis3.domain.model.ChunkingStrategy chunkingStrategy) {
+            this.chunkingStrategy = chunkingStrategy;
+        }
 
         public String getRootDir() {
             return rootDir;

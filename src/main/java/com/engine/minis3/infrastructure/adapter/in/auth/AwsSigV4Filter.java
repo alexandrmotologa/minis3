@@ -4,7 +4,10 @@ import com.engine.minis3.application.dto.ErrorResponse;
 import com.engine.minis3.domain.auth.CanonicalRequest;
 import com.engine.minis3.domain.auth.SigV4Credentials;
 import com.engine.minis3.domain.auth.SigV4Validator;
+import com.engine.minis3.domain.exception.InvalidAccessKeyIdException;
 import com.engine.minis3.domain.exception.MiniS3Exception;
+import com.engine.minis3.domain.model.ApiCredential;
+import com.engine.minis3.domain.port.CredentialRepositoryPort;
 import com.engine.minis3.infrastructure.config.MiniS3Properties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import jakarta.servlet.FilterChain;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -28,17 +32,14 @@ public class AwsSigV4Filter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(AwsSigV4Filter.class);
 
-    private final SigV4Validator validator;
+    private final CredentialRepositoryPort credentialRepository;
+    private final MiniS3Properties properties;
     private final boolean requireAuth;
     private final XmlMapper xmlMapper;
 
-    public AwsSigV4Filter(MiniS3Properties properties) {
-        SigV4Credentials creds = new SigV4Credentials(
-                properties.getAuth().getAccessKey(),
-                properties.getAuth().getSecretKey(),
-                properties.getAuth().getRegion()
-        );
-        this.validator = new SigV4Validator(creds);
+    public AwsSigV4Filter(CredentialRepositoryPort credentialRepository, MiniS3Properties properties) {
+        this.credentialRepository = credentialRepository;
+        this.properties = properties;
         this.requireAuth = properties.getAuth().isRequireAuth();
         this.xmlMapper = new XmlMapper();
     }
@@ -46,7 +47,6 @@ public class AwsSigV4Filter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // Allow admin API, static UI assets, and favicon without SigV4
         return uri.startsWith("/api/admin") ||
                 uri.equals("/") ||
                 uri.equals("/index.html") ||
@@ -82,32 +82,115 @@ public class AwsSigV4Filter extends OncePerRequestFilter {
     }
 
     private void validateHeaderAuth(HttpServletRequest request, String authHeader) {
+        String accessKey = extractAccessKeyFromHeader(authHeader);
+        ApiCredential credential = resolveCredential(accessKey);
+
+        enforcePolicy(request, credential);
+
         String requestDate = request.getHeader("x-amz-date");
         if (requestDate == null || requestDate.isBlank()) {
             requestDate = request.getHeader("Date");
         }
 
         CanonicalRequest canonical = buildCanonicalRequest(request, Collections.emptySet());
+        SigV4Validator validator = new SigV4Validator(new SigV4Credentials(
+                credential.getAccessKey(),
+                credential.getSecretKey(),
+                properties.getAuth().getRegion()
+        ));
         validator.validateHeader(authHeader, requestDate, canonical);
     }
 
     private void validatePresignedAuth(HttpServletRequest request, String signature) {
-        String credential = request.getParameter("X-Amz-Credential");
+        String credentialParam = request.getParameter("X-Amz-Credential");
+        String accessKey = extractAccessKeyFromParam(credentialParam);
+        ApiCredential credential = resolveCredential(accessKey);
+
+        enforcePolicy(request, credential);
+
         String date = request.getParameter("X-Amz-Date");
         String expires = request.getParameter("X-Amz-Expires");
 
-        // When building canonical query string for presigned URLs, X-Amz-Signature is excluded
         Set<String> excludedQueryParams = Set.of("X-Amz-Signature", "x-amz-signature");
         CanonicalRequest canonical = buildCanonicalRequest(request, excludedQueryParams);
 
-        validator.validatePresigned(credential, date, expires, signature, canonical);
+        SigV4Validator validator = new SigV4Validator(new SigV4Credentials(
+                credential.getAccessKey(),
+                credential.getSecretKey(),
+                properties.getAuth().getRegion()
+        ));
+        validator.validatePresigned(credentialParam, date, expires, signature, canonical);
+    }
+
+    private ApiCredential resolveCredential(String accessKey) {
+        // 1. Check custom credentials from SQLite
+        Optional<ApiCredential> custom = credentialRepository.findByAccessKey(accessKey);
+        if (custom.isPresent()) {
+            return custom.get();
+        }
+
+        // 2. Check master credentials from configuration
+        if (properties.getAuth().getAccessKey().equals(accessKey)) {
+            return new ApiCredential(
+                    properties.getAuth().getAccessKey(),
+                    properties.getAuth().getSecretKey(),
+                    ApiCredential.Role.ADMIN,
+                    "*",
+                    java.time.Instant.EPOCH
+            );
+        }
+
+        throw new InvalidAccessKeyIdException("The AWS Access Key Id you provided does not exist in our records: " + accessKey);
+    }
+
+    private void enforcePolicy(HttpServletRequest request, ApiCredential credential) {
+        // Enforce method authorization (e.g. Read-Only check)
+        if (!credential.allowsMethod(request.getMethod())) {
+            throw new MiniS3Exception("Access denied: role " + credential.getRole() + " is not authorized for " + request.getMethod(), "AccessDenied", 403) {};
+        }
+
+        // Enforce bucket scope
+        String uri = request.getRequestURI();
+        String bucket = extractBucketFromUri(uri);
+        if (bucket != null && !credential.allowsBucket(bucket)) {
+            throw new MiniS3Exception("Access denied: credentials do not have permission for bucket " + bucket, "AccessDenied", 403) {};
+        }
+    }
+
+    private String extractBucketFromUri(String uri) {
+        if (uri == null || uri.isBlank() || "/".equals(uri)) return null;
+        String clean = uri.startsWith("/") ? uri.substring(1) : uri;
+        int slashIdx = clean.indexOf('/');
+        return (slashIdx != -1) ? clean.substring(0, slashIdx) : clean;
+    }
+
+    private String extractAccessKeyFromHeader(String authHeader) {
+        int credIdx = authHeader.indexOf("Credential=");
+        if (credIdx == -1) {
+            throw new InvalidAccessKeyIdException("Malformed Authorization header: missing Credential=");
+        }
+        int slashIdx = authHeader.indexOf('/', credIdx + 11);
+        if (slashIdx == -1) {
+            throw new InvalidAccessKeyIdException("Malformed Credential parameter in Authorization header");
+        }
+        return authHeader.substring(credIdx + 11, slashIdx).trim();
+    }
+
+    private String extractAccessKeyFromParam(String credentialParam) {
+        if (credentialParam == null) {
+            throw new InvalidAccessKeyIdException("Malformed X-Amz-Credential parameter");
+        }
+        String decoded = URLDecoder.decode(credentialParam, StandardCharsets.UTF_8);
+        if (!decoded.contains("/")) {
+            throw new InvalidAccessKeyIdException("Malformed X-Amz-Credential parameter");
+        }
+        return decoded.substring(0, decoded.indexOf('/')).trim();
     }
 
     private CanonicalRequest buildCanonicalRequest(HttpServletRequest request, Set<String> excludedQueryParams) {
         String method = request.getMethod();
         String uri = request.getRequestURI();
 
-        // Build canonical query string: sorted parameter names
         Map<String, String[]> paramMap = request.getParameterMap();
         List<String> sortedKeys = new ArrayList<>(paramMap.keySet());
         Collections.sort(sortedKeys);
@@ -122,13 +205,14 @@ public class AwsSigV4Filter extends OncePerRequestFilter {
                 if (querySb.length() > 0) {
                     querySb.append('&');
                 }
-                querySb.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
+                String decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8);
+                String decodedVal = URLDecoder.decode(val, StandardCharsets.UTF_8);
+                querySb.append(URLEncoder.encode(decodedKey, StandardCharsets.UTF_8).replace("+", "%20"))
                         .append('=')
-                        .append(URLEncoder.encode(val, StandardCharsets.UTF_8));
+                        .append(URLEncoder.encode(decodedVal, StandardCharsets.UTF_8).replace("+", "%20"));
             }
         }
 
-        // Build headers map & signed headers list
         Map<String, String> headers = new HashMap<>();
         List<String> signedHeaderNames = new ArrayList<>();
 
@@ -140,9 +224,13 @@ public class AwsSigV4Filter extends OncePerRequestFilter {
             }
         }
 
-        // Host header is mandatory in canonical request
         if (!headers.containsKey("host")) {
-            headers.put("host", request.getServerName() + ":" + request.getServerPort());
+            int port = request.getServerPort();
+            if (port == 80 || port == 443 || port <= 0) {
+                headers.put("host", request.getServerName());
+            } else {
+                headers.put("host", request.getServerName() + ":" + port);
+            }
         }
 
         String authHeader = request.getHeader("Authorization");

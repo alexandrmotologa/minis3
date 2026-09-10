@@ -16,11 +16,17 @@ public final class Bucket {
 
     private final String name;
     private final Instant createdAt;
+    private final VersioningStatus versioningStatus;
 
     public Bucket(String name, Instant createdAt) {
+        this(name, createdAt, VersioningStatus.OFF);
+    }
+
+    public Bucket(String name, Instant createdAt, VersioningStatus versioningStatus) {
         validateName(name);
         this.name = name;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
+        this.versioningStatus = (versioningStatus != null) ? versioningStatus : VersioningStatus.OFF;
     }
 
     public static void validateName(String name) {
@@ -38,6 +44,10 @@ public final class Bucket {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public VersioningStatus getVersioningStatus() {
+        return versioningStatus;
     }
 
     @Override

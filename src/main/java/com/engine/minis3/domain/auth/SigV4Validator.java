@@ -6,6 +6,7 @@ import com.engine.minis3.domain.exception.SignatureDoesNotMatchException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -86,7 +87,8 @@ public final class SigV4Validator {
             throw new SignatureDoesNotMatchException("Missing required query parameters for presigned authorization");
         }
 
-        String[] parts = credentialParam.split("/");
+        String decodedCred = URLDecoder.decode(credentialParam, StandardCharsets.UTF_8);
+        String[] parts = decodedCred.split("/");
         if (parts.length != 5) {
             throw new SignatureDoesNotMatchException("Malformed Credential parameter: " + credentialParam);
         }

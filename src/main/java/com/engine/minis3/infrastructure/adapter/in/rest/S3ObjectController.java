@@ -1,17 +1,17 @@
 package com.engine.minis3.infrastructure.adapter.in.rest;
 
 import com.engine.minis3.application.service.ObjectService;
+import com.engine.minis3.domain.exception.NoSuchKeyException;
 import com.engine.minis3.domain.model.S3Object;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,9 +48,14 @@ public class S3ObjectController {
                 contentMd5
         );
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.ETAG, "\"" + object.getEtag() + "\"")
-                .build();
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
+                .header(HttpHeaders.ETAG, "\"" + object.getEtag() + "\"");
+
+        if (object.getVersionId() != null && !"null".equalsIgnoreCase(object.getVersionId())) {
+            builder.header("x-amz-version-id", object.getVersionId());
+        }
+
+        return builder.build();
     }
 
     /**
@@ -60,14 +65,18 @@ public class S3ObjectController {
     public void getObject(
             @PathVariable("bucket") String bucket,
             @PathVariable("key") String rawKey,
+            @RequestParam(value = "versionId", required = false) String versionId,
             @RequestHeader(value = HttpHeaders.RANGE, required = false) String rangeHeader,
             jakarta.servlet.http.HttpServletResponse response) throws IOException {
 
         String key = cleanKey(rawKey);
-        S3Object object = objectService.getObject(bucket, key);
+        S3Object object = objectService.getObject(bucket, key, versionId);
 
         response.setHeader(HttpHeaders.ETAG, "\"" + object.getEtag() + "\"");
         response.setHeader(HttpHeaders.LAST_MODIFIED, DateTimeFormatter.RFC_1123_DATE_TIME.format(object.getCreatedAt().atZone(java.time.ZoneOffset.UTC)));
+        if (object.getVersionId() != null && !"null".equalsIgnoreCase(object.getVersionId())) {
+            response.setHeader("x-amz-version-id", object.getVersionId());
+        }
 
         if (rangeHeader != null && !rangeHeader.isBlank()) {
             handleRangeRequest(object, rangeHeader, response);
@@ -86,29 +95,47 @@ public class S3ObjectController {
     @RequestMapping(value = "/{bucket}/{*key}", method = RequestMethod.HEAD)
     public ResponseEntity<Void> headObject(
             @PathVariable("bucket") String bucket,
-            @PathVariable("key") String rawKey) {
+            @PathVariable("key") String rawKey,
+            @RequestParam(value = "versionId", required = false) String versionId) {
 
         String key = cleanKey(rawKey);
-        S3Object object = objectService.getObject(bucket, key);
+        Optional<S3Object> objOpt = objectService.headObject(bucket, key, versionId);
+        if (objOpt.isEmpty()) {
+            throw new NoSuchKeyException(key);
+        }
 
-        return ResponseEntity.ok()
+        S3Object object = objOpt.get();
+        if (object.isDeleteMarker()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .header("x-amz-delete-marker", "true")
+                    .header("x-amz-version-id", object.getVersionId())
+                    .build();
+        }
+
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .header(HttpHeaders.ETAG, "\"" + object.getEtag() + "\"")
                 .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(object.getSize()))
                 .header(HttpHeaders.CONTENT_TYPE, object.getContentType())
-                .header(HttpHeaders.LAST_MODIFIED, DateTimeFormatter.RFC_1123_DATE_TIME.format(object.getCreatedAt().atZone(java.time.ZoneOffset.UTC)))
-                .build();
+                .header(HttpHeaders.LAST_MODIFIED, DateTimeFormatter.RFC_1123_DATE_TIME.format(object.getCreatedAt().atZone(java.time.ZoneOffset.UTC)));
+
+        if (object.getVersionId() != null && !"null".equalsIgnoreCase(object.getVersionId())) {
+            builder.header("x-amz-version-id", object.getVersionId());
+        }
+
+        return builder.build();
     }
 
     /**
-     * Delete an object: DELETE /{bucket}/{key}
+     * Delete an object or version: DELETE /{bucket}/{key}
      */
     @DeleteMapping(value = "/{bucket}/{*key}", params = "!uploadId")
     public ResponseEntity<Void> deleteObject(
             @PathVariable("bucket") String bucket,
-            @PathVariable("key") String rawKey) {
+            @PathVariable("key") String rawKey,
+            @RequestParam(value = "versionId", required = false) String versionId) {
 
         String key = cleanKey(rawKey);
-        objectService.deleteObject(bucket, key);
+        objectService.deleteObject(bucket, key, versionId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
