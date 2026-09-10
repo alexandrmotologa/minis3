@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="squircle-clip-minis3">
+      <rect x="24" y="24" width="976" height="976" rx="220" />
+    </clipPath>
+
+    <!-- Obsidian & Slate Shading -->
+    <linearGradient id="m-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#070a11"/>
+    </linearGradient>
+    <linearGradient id="m-slate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="m-light-slate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <!-- Electric Cyan S3 Flow Streams -->
+    <linearGradient id="m-cyan-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#00f5ff"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="m-cyan-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="m-cyan-deep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#082f49"/>
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="m-shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#070a11" flood-opacity="0.13" />
+    </filter>
+  </defs>
+
+  <!-- Luxury White Squircle Container -->
+  <rect x="24" y="24" width="976" height="976" rx="220" fill="#ffffff" stroke="#e2e8f0" stroke-width="5" />
+
+  <g clip-path="url(#squircle-clip-minis3)">
+    <!-- Main Center Group -->
+    <g transform="translate(512, 512) scale(1.05) translate(-512, -512)" filter="url(#m-shadow)">
+
+      <!-- Background S3 CAS Hash Axis Guideline -->
+      <g stroke="#cbd5e1" stroke-width="3" stroke-dasharray="6,8" opacity="0.65">
+        <line x1="210" y1="690" x2="810" y2="330" />
+      </g>
+      <circle cx="210" cy="690" r="5.5" fill="#0284c7" />
+      <circle cx="810" cy="330" r="5.5" fill="#00f5ff" />
+
+      <!-- ================= 9 BOLD SEAMLESS PLANES ================= -->
+
+      <!-- 1. Cranium & Forehead Vault (Massive Obsidian Plane) -->
+      <polygon points="340,310 520,230 640,320 570,420 380,440" fill="url(#m-dark)" />
+
+      <!-- 2. Nape & Crown Scale Fold (Slate Mid Fold - First Scale Tier) -->
+      <polygon points="260,390 340,310 380,440 280,490" fill="url(#m-slate)" />
+
+      <!-- 3. Tapered Mammalian Snout & Muzzle Plate -->
+      <polygon points="640,320 780,380 750,450 630,410" fill="url(#m-light-slate)" />
+      <!-- Snout Tip Rhinarium (Electric Cyan Telemetry Port) -->
+      <polygon points="750,450 780,380 810,420 770,460" fill="url(#m-cyan-bright)" />
+      <!-- Nostril slit -->
+      <line x1="775" y1="410" x2="788" y2="425" stroke="#082f49" stroke-width="3.5" stroke-linecap="round" />
+
+      <!-- 4. The Telemetry Eye (Negative Space Cutout & Cyan Core) -->
+      <polygon points="540,340 590,355 565,385 525,370" fill="#ffffff" />
+      <polygon points="545,345 585,357 562,380 530,370" fill="#00f5ff" />
+      <polygon points="555,352 578,360 563,375 545,368" fill="#070a11" />
+      <circle cx="552" cy="358" r="2.5" fill="#ffffff" />
+
+      <!-- 5. Cheek & Lower Mandible Keel (Pure Ice-White Contrast Facet) -->
+      <polygon points="380,440 570,420 630,410 600,520 470,560" fill="#ffffff" />
+
+      <!-- 6. Armor Scale Plate 1 - Ingestion Tier (Electric Cyan Primary Stream) -->
+      <polygon points="600,520 750,480 690,620 530,620 470,560" fill="url(#m-cyan-bright)" />
+
+      <!-- 7. Armor Scale Plate 2 - Deduplication Tier (Vivid Cobalt Middle Vector) -->
+      <polygon points="530,620 690,620 620,730 450,700" fill="url(#m-cyan-mid)" />
+
+      <!-- 8. Armor Scale Plate 3 - Zstd Compression Vault (Deep Navy Base Vector) -->
+      <polygon points="450,700 620,730 530,820 370,760" fill="url(#m-cyan-deep)" />
+
+      <!-- 9. Lower Carapace & Forepaw Base Anchor (Obsidian & Slate Grounding) -->
+      <polygon points="280,490 380,440 470,560 450,700 370,760 300,660" fill="url(#m-dark)" />
+      <polygon points="300,660 370,760 330,840 250,770" fill="url(#m-slate)" />
+
+      <!-- Prehensile Foreclaw Facet (Grounded Vault Anchor) -->
+      <polygon points="330,840 370,760 420,830 360,865" fill="url(#m-cyan-bright)" />
+
+      <!-- MiniS3 Center Focal Core (Central CAS Block on Heart Keel) -->
+      <circle cx="520" cy="510" r="14" fill="#070a11" />
+      <circle cx="520" cy="510" r="9" fill="#00f5ff" />
+      <circle cx="520" cy="510" r="4" fill="#ffffff" />
+    </g>
+  </g>
+</svg>

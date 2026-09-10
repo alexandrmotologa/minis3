@@ -1,6 +1,52 @@
-# MiniS3
+<p align="center">
+  <img src="docs/images/logo.png" alt="MiniS3 Logo" width="170" />
+</p>
 
-MiniS3 is a lightweight S3-compatible content-addressable storage (CAS) engine written in Java 21 LTS using Spring Boot 3.3 and Virtual Threads. It implements the AWS S3 REST API and AWS Signature Version 4 authentication while deduplicating identical object payloads across buckets using SHA-256 content addressing and Zstandard compression.
+<h1 align="center">MiniS3</h1>
+
+<p align="center">
+  <strong>Lightweight S3-Compatible Content-Addressable Storage Engine</strong><br>
+  <em>Deterministic SHA-256 CAS Deduplication &bull; Zstandard Compression &bull; FastCDC &bull; AWS SigV4 &bull; Java 21 Virtual Threads</em>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Java-21%20LTS-orange.svg" alt="Java 21"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Spring%20Boot-3.3.3-brightgreen.svg" alt="Spring Boot 3.3.3"></a>
+  <a href="#"><img src="https://img.shields.io/badge/AWS%20S3-API%20Compatible-informational.svg" alt="AWS S3 Compatible"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Storage-CAS%20%2B%20Zstd-blueviolet.svg" alt="CAS Deduplication"></a>
+</p>
+
+---
+
+MiniS3 is an S3-compatible content-addressable storage (CAS) engine written in Java 21 LTS using Spring Boot 3.3 and Virtual Threads. It implements the AWS S3 REST API and AWS Signature Version 4 authentication while deduplicating identical object payloads across buckets using SHA-256 content addressing and Zstandard block compression.
+
+## Visual Console & Real Telemetry
+
+MiniS3 includes an embedded real-time web console accessible directly at `http://localhost:9000`. The console communicates over Server-Sent Events (SSE) to display deduplication ratios, byte savings, object version trees, and background storage maintenance status.
+
+### Main Telemetry & Object Explorer
+Inspect physical versus logical storage footprints, toggle object version listings, drag-and-drop uploads, and trigger background storage scrubs:
+
+<p align="center">
+  <img src="docs/images/dashboard_main.png" alt="MiniS3 Live Telemetry Dashboard" width="100%" />
+</p>
+
+### Built-in Media & Document Previewer
+Preview images, vector SVGs, JSON documents, markdown, and audio/video files directly in the browser without third-party tools:
+
+<p align="center">
+  <img src="docs/images/preview_modal.png" alt="Media & Document Previewer" width="90%" />
+</p>
+
+### S3 Presigned URL Generator
+Generate standard AWS SigV4 signed query parameter URLs with configurable expiration windows:
+
+<p align="center">
+  <img src="docs/images/presign_modal.png" alt="S3 Presigned URL Generator" width="90%" />
+</p>
+
+---
 
 ## Why MiniS3 exists
 
@@ -16,18 +62,30 @@ MiniS3 addresses this with a content-addressable storage core:
 
 ## Key capabilities
 
-- AWS S3 compatibility: Implements core endpoints including bucket creation, single object PUT and GET, byte-range retrieval (`Range: bytes=start-end`), object deletion, and `ListObjectsV2` pagination.
-- Object versioning and multi-object delete: Full S3 versioning lifecycle (`ENABLED`, `SUSPENDED`, `OFF`), non-current version tracking, delete markers, `GET ?versions` XML response, and batch `POST ?delete`.
-- FastCDC content-defined chunking: Gear-hash rolling window partitioning with two-phase normalization for resilient deduplication under byte insertions and shift shifts.
-- Entropy-aware compression bypass: Fast Shannon entropy estimation detects pre-compressed formats (gzip, mp4, zip) to bypass Zstandard compression and avoid CPU cycles.
-- Storage scrubber & bitrot detector: Audits physical chunk integrity against recorded SHA-256 digests and reports health statistics.
-- Multi-credential IAM: Dynamic API key management supporting scoped roles (`ADMIN`, `READ_WRITE`, `READ_ONLY`) and bucket restriction rules.
-- S3 Presigned URLs: Generates and validates standard AWS SigV4 signed query parameter URLs with expiration limits.
-- Content-addressable deduplication: Slices objects into deterministic SHA-256 chunks with cross-bucket deduplication.
-- Transparent Zstandard compression: Native compression and decompression using high performance Zstd (`zstd-jni`).
-- S3 multipart uploads: Supports initiating, uploading parts, completing, and aborting large chunked uploads.
-- Real-time SSE telemetry and dashboard: Embedded single-page dashboard featuring a live activity feed, bucket versioning controls, media player & document preview modal, and presign UI.
-- Java 21 Virtual Threads: Handles concurrent streaming I/O with high throughput and low memory overhead.
+- **AWS S3 compatibility**: Implements core endpoints including bucket creation, single object PUT and GET, byte-range retrieval (`Range: bytes=start-end`), object deletion, and `ListObjectsV2` pagination.
+- **Object versioning and multi-object delete**: Full S3 versioning lifecycle (`ENABLED`, `SUSPENDED`, `OFF`), non-current version tracking, delete markers, `GET ?versions` XML response, and batch `POST ?delete`.
+- **FastCDC content-defined chunking**: Gear-hash rolling window partitioning with two-phase normalization for resilient deduplication under byte insertions and offset shifts.
+- **Entropy-aware compression bypass**: Fast Shannon entropy estimation detects pre-compressed formats (gzip, mp4, zip) to bypass Zstandard compression and avoid CPU cycles.
+- **Storage scrubber & bitrot detector**: Audits physical chunk integrity against recorded SHA-256 digests and reports health statistics.
+- **Multi-credential IAM**: Dynamic API key management supporting scoped roles (`ADMIN`, `READ_WRITE`, `READ_ONLY`) and bucket restriction rules.
+- **S3 Presigned URLs**: Generates and validates standard AWS SigV4 signed query parameter URLs with expiration limits.
+- **Content-addressable deduplication**: Slices objects into deterministic SHA-256 chunks with cross-bucket deduplication.
+- **Transparent Zstandard compression**: Native compression and decompression using high performance Zstd (`zstd-jni`).
+- **S3 multipart uploads**: Supports initiating, uploading parts, completing, and aborting large chunked uploads.
+- **Real-time SSE telemetry**: Embedded single-page dashboard featuring a live activity feed, bucket versioning controls, media player & document preview modal, and presign UI.
+- **Java 21 Virtual Threads**: Handles concurrent streaming I/O with high throughput and low memory overhead.
+
+## Mascot & Identity
+
+<p align="center">
+  <img src="docs/images/logo.png" alt="Anatomical Manis Logo" width="200" />
+</p>
+
+The emblem and mascot of MiniS3 is the **Anatomical Vault Pangolin (*Manis*)**.
+
+- **Taxonomic & Phonetic Metaphor:** The genus *Manis* directly mirrors the **MiniS3** moniker.
+- **Interlocking Keratin CAS Scales:** Just as the pangolin curls into an impenetrable geometric vault of interlocking dermal armor, MiniS3 composes files from deterministic cryptographic CAS scales (SHA-256 chunks).
+- **Zstandard Compression & Bitrot Immunity:** The compact folded posture represents maximum storage density alongside automated background integrity verification.
 
 ## Architecture
 

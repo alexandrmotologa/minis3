@@ -65,7 +65,10 @@ public class SqliteMetadataRepository implements BucketRepositoryPort, ObjectMet
                 stmt.execute("PRAGMA synchronous = NORMAL;");
                 stmt.execute("PRAGMA foreign_keys = ON;");
 
-                // Execute schema.sql
+                // 1. Automatic schema evolution / migration for existing databases
+                applyMigrations(conn);
+
+                // 2. Execute schema.sql to ensure all tables and indexes exist
                 ClassPathResource resource = new ClassPathResource("schema.sql");
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
                     String ddl = reader.lines().collect(Collectors.joining("\n"));
@@ -75,9 +78,6 @@ public class SqliteMetadataRepository implements BucketRepositoryPort, ObjectMet
                         }
                     }
                 }
-
-                // Automatic schema evolution / migration for existing databases
-                applyMigrations(conn);
             }
             log.info("Initialized SQLite metadata store at: {}", dbPath);
         } catch (Exception e) {
@@ -222,8 +222,9 @@ public class SqliteMetadataRepository implements BucketRepositoryPort, ObjectMet
     public void save(S3Object object) {
         String markPreviousOldSql = "UPDATE objects SET is_latest = 0 WHERE bucket_name = ? AND key = ?";
         String deleteUnversionedObjSql = "DELETE FROM objects WHERE bucket_name = ? AND key = ? AND version_id = 'null'";
+        String deleteUnversionedChunksSql = "DELETE FROM object_chunks WHERE bucket_name = ? AND object_key = ? AND version_id = 'null'";
         String insertObjSql = "INSERT INTO objects (bucket_name, key, version_id, is_latest, is_delete_marker, size, etag, content_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String insertChunkSql = "INSERT INTO object_chunks (bucket_name, object_key, version_id, chunk_order, chunk_hash, chunk_offset, chunk_length) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertChunkSql = "INSERT OR REPLACE INTO object_chunks (bucket_name, object_key, version_id, chunk_order, chunk_hash, chunk_offset, chunk_length) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
@@ -234,6 +235,11 @@ public class SqliteMetadataRepository implements BucketRepositoryPort, ObjectMet
                         delPs.setString(1, object.getBucketName());
                         delPs.setString(2, object.getKey());
                         delPs.executeUpdate();
+                    }
+                    try (PreparedStatement delChunkPs = conn.prepareStatement(deleteUnversionedChunksSql)) {
+                        delChunkPs.setString(1, object.getBucketName());
+                        delChunkPs.setString(2, object.getKey());
+                        delChunkPs.executeUpdate();
                     }
                 } else {
                     // Versioned: mark previous entries as non-latest
