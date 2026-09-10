@@ -78,14 +78,14 @@ MiniS3 addresses this with a content-addressable storage core:
 ## Mascot & Identity
 
 <p align="center">
-  <img src="docs/images/logo.png" alt="Anatomical Manis Logo" width="200" />
+  <img src="docs/images/logo.png" alt="Anatomical Vault Bear Logo" width="180" />
 </p>
 
-The emblem and mascot of MiniS3 is the **Anatomical Vault Pangolin (*Manis*)**.
+The official emblem and mascot of MiniS3 is the **Anatomical Vault Bear (*Ursus CAS*)**.
 
-- **Taxonomic & Phonetic Metaphor:** The genus *Manis* directly mirrors the **MiniS3** moniker.
-- **Interlocking Keratin CAS Scales:** Just as the pangolin curls into an impenetrable geometric vault of interlocking dermal armor, MiniS3 composes files from deterministic cryptographic CAS scales (SHA-256 chunks).
-- **Zstandard Compression & Bitrot Immunity:** The compact folded posture represents maximum storage density alongside automated background integrity verification.
+- **Deep Cold Storage & Immutable Durability:** In nature and mythology, the bear represents unshakeable strength, territorial guardianship, and deep hibernation resilience &mdash; the exact evolutionary superpower required for enterprise S3 object storage and infinite data retention.
+- **Architectural Hexagonal Gateway:** Encapsulated in a 40px obsidian structural frame with inner cyan telemetry lines, representing the rigid boundary between untrusted clients and the internal CAS storage engine.
+- **Cryptographic CAS Core:** Centered upon the bear's armored breastplate is the cryptographic SHA-256 CAS vault seal, indexing every ingested byte block to guarantee zero duplicate writes and bitrot immunity.
 
 ## Architecture
 

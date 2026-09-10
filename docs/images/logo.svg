@@ -1,102 +1,184 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <clipPath id="squircle-clip-minis3">
+    <clipPath id="squircle-clip">
       <rect x="24" y="24" width="976" height="976" rx="220" />
     </clipPath>
 
-    <!-- Obsidian & Slate Shading -->
-    <linearGradient id="m-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5ff"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <linearGradient id="cyan-bright" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+
+    <linearGradient id="slate-body" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#070a11"/>
+      <stop offset="100%" stop-color="#0b0f19"/>
     </linearGradient>
-    <linearGradient id="m-slate" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#1e293b"/>
+
+    <linearGradient id="facet-highlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
     </linearGradient>
-    <linearGradient id="m-light-slate" x1="0%" y1="0%" x2="100%" y2="100%">
+
+    <linearGradient id="facet-light" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="100%" stop-color="#334155"/>
     </linearGradient>
 
-    <!-- Electric Cyan S3 Flow Streams -->
-    <linearGradient id="m-cyan-bright" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="40%" stop-color="#00f5ff"/>
-      <stop offset="100%" stop-color="#0284c7"/>
-    </linearGradient>
-    <linearGradient id="m-cyan-mid" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7"/>
-      <stop offset="100%" stop-color="#0369a1"/>
-    </linearGradient>
-    <linearGradient id="m-cyan-deep" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7"/>
-      <stop offset="100%" stop-color="#082f49"/>
+    <linearGradient id="facet-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
 
-    <!-- Subtle Drop Shadow -->
-    <filter id="m-shadow" x="-10%" y="-10%" width="125%" height="125%">
-      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#070a11" flood-opacity="0.13" />
+    <linearGradient id="facet-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <filter id="subtle-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.14" />
     </filter>
   </defs>
 
   <!-- Luxury White Squircle Container -->
-  <rect x="24" y="24" width="976" height="976" rx="220" fill="#ffffff" stroke="#e2e8f0" stroke-width="5" />
+  <rect x="24" y="24" width="976" height="976" rx="220" fill="#ffffff" stroke="#e2e8f0" stroke-width="6" />
 
-  <g clip-path="url(#squircle-clip-minis3)">
-    <!-- Main Center Group -->
-    <g transform="translate(512, 512) scale(1.05) translate(-512, -512)" filter="url(#m-shadow)">
+  <g clip-path="url(#squircle-clip)">
+    <g transform="translate(512, 512)" filter="url(#subtle-shadow)">
 
-      <!-- Background S3 CAS Hash Axis Guideline -->
-      <g stroke="#cbd5e1" stroke-width="3" stroke-dasharray="6,8" opacity="0.65">
-        <line x1="210" y1="690" x2="810" y2="330" />
-      </g>
-      <circle cx="210" cy="690" r="5.5" fill="#0284c7" />
-      <circle cx="810" cy="330" r="5.5" fill="#00f5ff" />
+      <!-- Hexagonal Architectural Gateway Frame (Massive 40px Outer Stroke) -->
+      <polygon points="
+        0,-390
+        338,-195
+        338,195
+        0,390
+        -338,195
+        -338,-195
+      " fill="none" stroke="#0f172a" stroke-width="40" stroke-linejoin="round" />
 
-      <!-- ================= 9 BOLD SEAMLESS PLANES ================= -->
+      <!-- Inner Dashed Cyan Hexagon (Telemetry Accent) -->
+      <polygon points="
+        0,-355
+        307,-177
+        307,177
+        0,355
+        -307,177
+        -307,-177
+      " fill="none" stroke="#00f5ff" stroke-width="4" opacity="0.4" stroke-dasharray="16, 12" />
 
-      <!-- 1. Cranium & Forehead Vault (Massive Obsidian Plane) -->
-      <polygon points="340,310 520,230 640,320 570,420 380,440" fill="url(#m-dark)" />
+      <!-- ==================== The Anatomical Vault Bear (Ursus CAS) ==================== -->
+      
+      <!-- Outer Solid Silhouette -->
+      <path d="
+        M 0,-190
+        L 65,-185
+        L 115,-260
+        L 155,-280
+        L 185,-250
+        L 190,-165
+        L 240,-80
+        L 280,60
+        L 290,195
+        L 210,230
+        L 220,300
+        L 110,325
+        L 0,350
+        L -110,325
+        L -220,300
+        L -210,230
+        L -290,195
+        L -280,60
+        L -240,-80
+        L -190,-165
+        L -185,-250
+        L -155,-280
+        L -115,-260
+        L -65,-185
+        Z
+      " fill="url(#slate-body)" stroke="#0f172a" stroke-width="8" stroke-linejoin="round" />
 
-      <!-- 2. Nape & Crown Scale Fold (Slate Mid Fold - First Scale Tier) -->
-      <polygon points="260,390 340,310 380,440 280,490" fill="url(#m-slate)" />
+      <!-- Authentic Anatomical Bear Ears (Curved Low-Poly Cups) -->
+      <!-- Left Ear (Shadow Side) -->
+      <polygon points="-115,-260 -155,-280 -185,-250 -155,-190 -115,-185" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="-125,-245 -165,-255 -170,-230 -140,-200" fill="url(#cyan-glow)" />
 
-      <!-- 3. Tapered Mammalian Snout & Muzzle Plate -->
-      <polygon points="640,320 780,380 750,450 630,410" fill="url(#m-light-slate)" />
-      <!-- Snout Tip Rhinarium (Electric Cyan Telemetry Port) -->
-      <polygon points="750,450 780,380 810,420 770,460" fill="url(#m-cyan-bright)" />
-      <!-- Nostril slit -->
-      <line x1="775" y1="410" x2="788" y2="425" stroke="#082f49" stroke-width="3.5" stroke-linecap="round" />
+      <!-- Right Ear (Light Side) -->
+      <polygon points="115,-260 155,-280 185,-250 155,-190 115,-185" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="125,-245 165,-255 170,-230 140,-200" fill="url(#cyan-glow)" />
 
-      <!-- 4. The Telemetry Eye (Negative Space Cutout & Cyan Core) -->
-      <polygon points="540,340 590,355 565,385 525,370" fill="#ffffff" />
-      <polygon points="545,345 585,357 562,380 530,370" fill="#00f5ff" />
-      <polygon points="555,352 578,360 563,375 545,368" fill="#070a11" />
-      <circle cx="552" cy="358" r="2.5" fill="#ffffff" />
+      <!-- Broad Ursine Cranium / Forehead -->
+      <polygon points="0,-190 65,-105 0,-35 -65,-105" fill="url(#facet-highlight)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="0,-190 0,-35 -65,-105" fill="url(#facet-light)" />
 
-      <!-- 5. Cheek & Lower Mandible Keel (Pure Ice-White Contrast Facet) -->
-      <polygon points="380,440 570,420 630,410 600,520 470,560" fill="#ffffff" />
+      <!-- Temples -->
+      <polygon points="-65,-105 -140,-65 -90,-15 -40,-30" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="65,-105 140,-65 90,-15 40,-30" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
 
-      <!-- 6. Armor Scale Plate 1 - Ingestion Tier (Electric Cyan Primary Stream) -->
-      <polygon points="600,520 750,480 690,620 530,620 470,560" fill="url(#m-cyan-bright)" />
+      <!-- Piercing Diamond-Cut Cyan Eyes -->
+      <!-- Left Eye -->
+      <polygon points="-65,-65 -85,-45 -50,-45" fill="url(#cyan-glow)" stroke="#0f172a" stroke-width="2" />
+      <circle cx="-65" cy="-51" r="3.5" fill="#ffffff" />
 
-      <!-- 7. Armor Scale Plate 2 - Deduplication Tier (Vivid Cobalt Middle Vector) -->
-      <polygon points="530,620 690,620 620,730 450,700" fill="url(#m-cyan-mid)" />
+      <!-- Right Eye -->
+      <polygon points="65,-65 85,-45 50,-45" fill="url(#cyan-glow)" stroke="#0f172a" stroke-width="2" />
+      <circle cx="65" cy="-51" r="3.5" fill="#ffffff" />
 
-      <!-- 8. Armor Scale Plate 3 - Zstd Compression Vault (Deep Navy Base Vector) -->
-      <polygon points="450,700 620,730 530,820 370,760" fill="url(#m-cyan-deep)" />
+      <!-- Muzzle / Nose Bridge -->
+      <polygon points="0,-35 45,-25 50,75 0,105" fill="url(#facet-light)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="0,-35 -45,-25 -50,75 0,105" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
 
-      <!-- 9. Lower Carapace & Forepaw Base Anchor (Obsidian & Slate Grounding) -->
-      <polygon points="280,490 380,440 470,560 450,700 370,760 300,660" fill="url(#m-dark)" />
-      <polygon points="300,660 370,760 330,840 250,770" fill="url(#m-slate)" />
+      <!-- Cheeks / Jowls -->
+      <polygon points="-45,-25 -50,75 -95,50 -90,-15" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="45,-25 50,75 95,50 90,-15" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
 
-      <!-- Prehensile Foreclaw Facet (Grounded Vault Anchor) -->
-      <polygon points="330,840 370,760 420,830 360,865" fill="url(#m-cyan-bright)" />
+      <!-- Nose / Olfactory Sensor (Cyan) -->
+      <polygon points="0,55 30,68 0,92 -30,68" fill="url(#cyan-glow)" stroke="#0f172a" stroke-width="1.5" />
 
-      <!-- MiniS3 Center Focal Core (Central CAS Block on Heart Keel) -->
-      <circle cx="520" cy="510" r="14" fill="#070a11" />
-      <circle cx="520" cy="510" r="9" fill="#00f5ff" />
-      <circle cx="520" cy="510" r="4" fill="#ffffff" />
+      <!-- Chin Shadow / Separation Line -->
+      <polygon points="0,105 25,115 -25,115" fill="#0b0f19" />
+
+      <!-- Heavy Armored Shoulder Plates (Tech Facets) -->
+      <!-- Left Shoulder -->
+      <polygon points="-190,-165 -240,-80 -170,0 -140,-65" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="-240,-80 -280,60 -210,120 -170,0" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="-280,60 -290,195 -210,230 -210,120" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="-270,75 -280,180 -225,190" fill="url(#cyan-glow)" opacity="0.85" />
+
+      <!-- Right Shoulder -->
+      <polygon points="190,-165 240,-80 170,0 140,-65" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="240,-80 280,60 210,120 170,0" fill="url(#facet-light)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="280,60 290,195 210,230 210,120" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="270,75 280,180 225,190" fill="url(#cyan-glow)" opacity="0.85" />
+
+      <!-- Massive Armored Chest Plate -->
+      <polygon points="0,115 70,125 135,170 0,250" fill="url(#facet-light)" stroke="#0f172a" stroke-width="3" />
+      <polygon points="0,115 -70,125 -135,170 0,250" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="3" />
+
+      <!-- Central Hexagonal CAS Cryptographic Core -->
+      <polygon points="
+        0,145
+        42,170
+        42,215
+        0,240
+        -42,215
+        -42,170
+      " fill="url(#cyan-glow)" stroke="#ffffff" stroke-width="4" />
+      <!-- Inner CAS Vault Core -->
+      <circle cx="0" cy="192" r="10" fill="#0f172a" />
+      <circle cx="0" cy="192" r="5" fill="#ffffff" />
+
+      <!-- Lower Plate Armor -->
+      <polygon points="0,250 -135,170 -210,230 -110,325 0,350" fill="url(#facet-dark)" stroke="#0f172a" stroke-width="4" />
+      <polygon points="0,250 135,170 210,230 110,325 0,350" fill="url(#facet-mid)" stroke="#0f172a" stroke-width="4" />
+
+      <!-- Chest Cyan Accent Insets -->
+      <polygon points="-120,185 -180,230 -110,280" fill="url(#cyan-glow)" opacity="0.8" />
+      <polygon points="120,185 180,230 110,280" fill="url(#cyan-glow)" opacity="0.8" />
+
     </g>
   </g>
 </svg>
