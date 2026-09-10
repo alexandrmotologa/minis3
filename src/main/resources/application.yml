@@ -1,0 +1,24 @@
+server:
+  port: ${MINIS3_PORT:9000}
+
+spring:
+  application:
+    name: minis3
+  threads:
+    virtual:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+
+minis3:
+  storage:
+    root-dir: ${MINIS3_DATA_DIR:./.minis3}
+    chunk-size-bytes: 4194304
+    zstd-level: 3
+  auth:
+    access-key: ${MINIS3_ACCESS_KEY:minis3-access-key}
+    secret-key: ${MINIS3_SECRET_KEY:minis3-secret-key}
+    region: ${MINIS3_REGION:us-east-1}
+    require-auth: ${MINIS3_REQUIRE_AUTH:false}

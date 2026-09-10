@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniS3 — S3-Compatible Content-Addressable Storage Engine</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">MiniS3</span>
+          <span class="brand-sub">CAS Engine</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <div class="engine-badge">
+          <span class="status-dot"></span>
+          <span>Virtual Threads &bull; Port 9000</span>
+        </div>
+        <button id="btn-gc" class="btn btn-secondary" title="Run Garbage Collection on unreferenced chunks">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Vacuum GC
+        </button>
+      </div>
+    </header>
+
+    <!-- Storage Telemetry Banner -->
+    <section class="telemetry-grid">
+      <div class="stat-card">
+        <div class="stat-label">Logical Ingested Size</div>
+        <div class="stat-value" id="stat-raw-bytes">0 B</div>
+        <div class="stat-hint">Uncompressed uploaded bytes</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Physical Disk Used</div>
+        <div class="stat-value" id="stat-disk-bytes">0 B</div>
+        <div class="stat-hint">Deduplicated Zstd CAS chunks</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Deduplication Ratio</div>
+        <div class="stat-value highlight" id="stat-dedup-ratio">1.00x</div>
+        <div class="stat-hint" id="stat-unique-chunks">0 unique chunks</div>
+      </div>
+
+      <div class="stat-card highlight-card">
+        <div class="stat-label">Disk Space Saved</div>
+        <div class="stat-value accent" id="stat-saved-percent">0.0%</div>
+        <div class="stat-hint">Storage reduction efficiency</div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Sidebar: Buckets -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>Buckets</h3>
+          <button id="btn-new-bucket" class="btn btn-sm btn-primary">+ New Bucket</button>
+        </div>
+        <ul id="bucket-list" class="bucket-list">
+          <li class="loading-item">Loading buckets...</li>
+        </ul>
+      </aside>
+
+      <!-- Content Area: Objects -->
+      <section class="content-panel">
+        <div class="panel-header">
+          <div>
+            <h2 id="current-bucket-title">Select a bucket</h2>
+            <div id="breadcrumb" class="breadcrumb">/</div>
+          </div>
+          <div class="panel-actions" id="bucket-actions" style="display: none;">
+            <button id="btn-delete-bucket" class="btn btn-danger btn-sm">Delete Bucket</button>
+          </div>
+        </div>
+
+        <!-- Upload Dropzone -->
+        <div id="dropzone" class="dropzone" style="display: none;">
+          <input type="file" id="file-input" multiple style="display: none;">
+          <div class="dropzone-content">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drag and drop files here to upload, or <a href="#" id="browse-link">browse your disk</a></p>
+            <span class="dropzone-sub">Files are chunked, SHA-256 hashed, and deduplicated automatically.</span>
+          </div>
+          <div id="upload-progress" class="upload-progress" style="display: none;">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <span id="progress-text">Uploading...</span>
+          </div>
+        </div>
+
+        <!-- Objects Table -->
+        <div class="table-container">
+          <table class="objects-table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Content Type</th>
+                <th>Size</th>
+                <th>ETag</th>
+                <th>Last Modified</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="objects-tbody">
+              <tr>
+                <td colspan="6" class="empty-state">Select a bucket from the sidebar to browse objects.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
