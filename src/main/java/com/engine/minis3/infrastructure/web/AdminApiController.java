@@ -197,4 +197,13 @@ public class AdminApiController {
         objectService.deleteObject(bucket, key, versionId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/version")
+    public ResponseEntity<Map<String, String>> getVersion() {
+        return ResponseEntity.ok(Map.of(
+                "version", com.engine.minis3.MiniS3Application.VERSION,
+                "name", "minis3",
+                "description", "Lightweight S3-Compatible Content-Addressable Storage Engine"
+        ));
+    }
 }

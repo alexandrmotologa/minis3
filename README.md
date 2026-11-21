@@ -25,6 +25,10 @@ MiniS3 is an S3-compatible content-addressable storage (CAS) engine written in J
 
 MiniS3 includes an embedded real-time web console accessible directly at `http://localhost:9000`. The console communicates over Server-Sent Events (SSE) to display deduplication ratios, byte savings, object version trees, and background storage maintenance status.
 
+<p align="center">
+  <img src="docs/images/minis3_demo.gif" alt="MiniS3 Interactive Console & Telemetry Demo" width="100%" />
+</p>
+
 ### Main Telemetry & Object Explorer
 Inspect physical versus logical storage footprints, toggle object version listings, drag-and-drop uploads, and trigger background storage scrubs:
 
@@ -108,7 +112,7 @@ For more details, see [docs/architecture.md](docs/architecture.md), [docs/cas-de
 
 ```bash
 mvn clean package
-java -jar target/minis3-1.0.0-SNAPSHOT.jar
+java -jar target/minis3-1.0.0.jar
 ```
 
 The server starts on port `9000` with default development credentials:

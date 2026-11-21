@@ -107,5 +107,12 @@ class SseEventsAndAdminApiTest {
         mockMvc.perform(post("/api/admin/gc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
+
+        // 9. Test Version Endpoint
+        mockMvc.perform(get("/api/admin/version"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(MiniS3Application.VERSION))
+                .andExpect(jsonPath("$.name").value("minis3"))
+                .andExpect(jsonPath("$.description").isNotEmpty());
     }
 }

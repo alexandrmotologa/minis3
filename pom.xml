@@ -13,7 +13,7 @@
 
     <groupId>com.engine</groupId>
     <artifactId>minis3</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>minis3</name>
     <description>Lightweight S3-Compatible Content-Addressable Storage Engine</description>
 
